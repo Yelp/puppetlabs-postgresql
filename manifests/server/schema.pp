@@ -14,6 +14,7 @@
 #
 define postgresql::server::schema(
   $db               = $postgresql::server::default_database,
+  $dialect          = $postgresql::server::dialect,
   $owner            = undef,
   $schema           = $title,
   $refreshonly      = $postgresql::server::refreshonly,
@@ -52,9 +53,17 @@ define postgresql::server::schema(
   }
 
   if $owner {
+    if $dialect == 'redshift' {
+      $unless = "SELECT 1 FROM pg_namespace JOIN pg_user rol ON nspowner = rol.usesysid WHERE nspname = '${schema}' AND usename = '${owner}'"
+    } elsif $dialect == 'postgres' {
+      $unless = "SELECT 1 FROM pg_namespace JOIN pg_roles rol ON nspowner = rol.oid WHERE nspname = '${schema}' AND rolname = '${owner}'"
+    } else {
+      fail('dialect must be set to a valid value')
+    }
+
     postgresql_psql { "${db}: ALTER SCHEMA \"${schema}\" OWNER TO \"${owner}\"":
       command => "ALTER SCHEMA \"${schema}\" OWNER TO ${owner}",
-      unless  => "SELECT 1 FROM pg_namespace JOIN pg_roles rol ON nspowner = rol.oid WHERE nspname = '${schema}' AND rolname = '${owner}'",
+      unless  => $unless,
       require => Postgresql_psql["${db}: CREATE SCHEMA \"${schema}\""],
     }
 
