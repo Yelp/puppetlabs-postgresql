@@ -4,6 +4,7 @@ define postgresql::server::role(
   $password_hash    = false,
   $createdb         = false,
   $createrole       = false,
+  $createuserschema = false,
   $db               = $postgresql::server::default_database,
   Enum['present', 'absent'] $ensure = 'present',
   $port             = undef,
@@ -136,6 +137,15 @@ define postgresql::server::role(
       unless      => "SELECT 1 FROM ${role_table} WHERE ${role_column_prefix}name = '${username}'",
       environment => $environment,
       require     => Class['Postgresql::Server'],
+    }
+
+    if $createuserschema {
+      postgresql::server::schema{ "${username}":
+        connect_settings => $connect_settings,
+        db               => $db,
+        dialect          => $dialect,
+        owner            => $username,
+      }
     }
 
     postgresql_psql {"${title}: ALTER ${role_keyword} \"${username}\" ${createdb_sql}":
