@@ -83,7 +83,7 @@ describe 'postgresql::server::grant', :type => :define do
     let :params do
       {
         :db => 'test',
-        :role => 'group test',
+        :role => 'GROUP test',
       }
     end
 
@@ -94,11 +94,11 @@ describe 'postgresql::server::grant', :type => :define do
     it { is_expected.to raise_error(Puppet::Error, /GROUP syntax is only available in the Redshift dialect/) }
   end
 
-  context 'plain (to group)' do
+  context 'plain (to GROUP)' do
     let :params do
       {
         :db => 'test',
-        :role => 'group test',
+        :role => 'GROUP test',
       }
     end
 
@@ -151,7 +151,31 @@ describe 'postgresql::server::grant', :type => :define do
     it { is_expected.to contain_postgresql__server__grant('test') }
     it { is_expected.to contain_postgresql_psql('test: grant:test').with(
       {
-        'command' => /GRANT USAGE ON SCHEMA "test" TO\s* group "test"/m,
+        'command' => /GRANT USAGE ON SCHEMA "test" TO\s* GROUP "test"/m,
+        'unless'  => /WHERE\s*nsp.nspname = 'test'/m,
+      }
+    ) }
+  end
+
+  context 'schema (to GROUP)' do
+    let :params do
+      {
+        :db => 'test',
+        :role => 'GROUP test',
+        :privilege => 'usage',
+        :object_name => 'test',
+        :object_type => 'schema',
+      }
+    end
+
+    let :pre_condition do
+      "class {'postgresql::server': dialect => 'redshift'}"
+    end
+
+    it { is_expected.to contain_postgresql__server__grant('test') }
+    it { is_expected.to contain_postgresql_psql('test: grant:test').with(
+      {
+        'command' => /GRANT USAGE ON SCHEMA "test" TO\s* GROUP "test"/m,
         'unless'  => /WHERE\s*nsp.nspname = 'test'/m,
       }
     ) }
@@ -181,11 +205,11 @@ describe 'postgresql::server::grant', :type => :define do
     ) }
   end
 
-  context 'all tables (to group)' do
+  context 'all tables (to GROUP)' do
     let :params do
       {
         :db => 'test',
-        :role => 'group test',
+        :role => 'GROUP test',
         :privilege => 'select',
         :object_type => 'all tables in schema',
         :object_name => 'public',
@@ -199,7 +223,7 @@ describe 'postgresql::server::grant', :type => :define do
     it { is_expected.to contain_postgresql__server__grant('test') }
     it { is_expected.to contain_postgresql_psql('test: grant:test').with(
       {
-        'command' => /GRANT SELECT ON ALL TABLES IN SCHEMA "public" TO\s* group "test"/m,
+        'command' => /GRANT SELECT ON ALL TABLES IN SCHEMA "public" TO\s* GROUP "test"/m,
         'unless'  => nil,
       }
     ) }

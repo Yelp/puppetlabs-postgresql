@@ -380,14 +380,13 @@ define postgresql::server::grant (
     default           => undef,
   }
 
-  if ($role =~ /^group (.*)/) {
-    $_quoted_role = "group \"${1}\""
+  if ($_lowercase_role =~ /^group (.*)/) {
+    $_quoted_role = "GROUP \"${1}\""
   } else {
     $_quoted_role = "\"${role}\""
   }
 
-  $grant_cmd = "GRANT ${_privilege} ON ${_object_type} \"${_togrant_object}\" TO
-      ${_quoted_role}"
+  $grant_cmd = "GRANT ${_privilege} ON ${_object_type} \"${_togrant_object}\" TO ${_quoted_role}"
   postgresql_psql { "${title}: grant:${name}":
     command          => $grant_cmd,
     db               => $on_db,
