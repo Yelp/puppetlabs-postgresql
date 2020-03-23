@@ -380,8 +380,8 @@ define postgresql::server::grant (
     default           => undef,
   }
 
-  if ($role =~ /^group (.*)/) {
-    $_quoted_role = "group \"${1}\""
+  if ($_lowercase_role =~ /^group (.*)/) {
+    $_quoted_role = "GROUP \"${1}\""
   } else {
     $_quoted_role = "\"${role}\""
   }
