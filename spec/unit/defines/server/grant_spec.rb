@@ -133,6 +133,30 @@ describe 'postgresql::server::grant', :type => :define do
     ) }
   end
 
+  context 'schema (to group)' do
+    let :params do
+      {
+        :db => 'test',
+        :role => 'group test',
+        :privilege => 'usage',
+        :object_name => 'test',
+        :object_type => 'schema',
+      }
+    end
+
+    let :pre_condition do
+      "class {'postgresql::server': dialect => 'redshift'}"
+    end
+
+    it { is_expected.to contain_postgresql__server__grant('test') }
+    it { is_expected.to contain_postgresql_psql('test: grant:test').with(
+      {
+        'command' => /GRANT USAGE ON SCHEMA "test" TO\s* GROUP "test"/m,
+        'unless'  => /WHERE\s*nsp.nspname = 'test'/m,
+      }
+    ) }
+  end
+
   context 'schema (to GROUP)' do
     let :params do
       {
